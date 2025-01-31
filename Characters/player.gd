@@ -1,46 +1,75 @@
 extends CharacterBody3D
 
-@export var move_speed = 5.0
-@export var mouse_sensitivity = 0.1
-@export var jump_strength = 7.5
+var speed
+const WALK_SPEED = 5.0
+const SPRINT_SPEED = 10.0
+const JUMP_VELOCITY = 4.5
+const SENSITIVITY = 0.01
 
-var vel = Vector3.ZERO
+#bob frequency
+const BOB_FREQ = 2.0
+const BOB_AMP = 0.08
+var t_bob = 0.0
+
+const BASE_FOV = 75.0
+const FOV_CHANGE = 1.5
+
+var gravity = 9.8
+
+@onready var head = $Head
+@onready var camera = $Head/Camera3D
 
 func _ready():
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 func _unhandled_input(event):
 	if event is InputEventMouseMotion:
-		rotate_y(-event.relative.x * mouse_sensitivity * 0.01)
-		$Camera3D.rotate_x(-event.relative.y * mouse_sensitivity * 0.01)
-		$Camera3D.rotation_degrees.x = clamp($Camera3D.rotation_degrees.x, -90, 90)
+		head.rotate_y(-event.relative.x * SENSITIVITY)
+		camera.rotate_x(-event.relative.y * SENSITIVITY)
+		camera.rotation.x = clamp(camera.rotation.x, deg_to_rad(-40), deg_to_rad(60))
 
 func _physics_process(delta):
-	handle_movement(delta)
+	# Add the gravity.
+	if not is_on_floor():
+		velocity += get_gravity() * delta
 
-func handle_movement(delta):
-	var input_dir = Vector3.ZERO
-
-	if Input.is_action_pressed("move_right"):
-		input_dir.x += 1
-	if Input.is_action_pressed("move_left"):
-		input_dir.x -= 1
-	if Input.is_action_pressed("move_backward"):
-		input_dir.z += 1
-	if Input.is_action_pressed("move_forward"):
-		input_dir.z -= 1
-
-	input_dir = input_dir.normalized()
-
-	# Calculate movement direction based on player orientation
-	var direction = (transform.basis.x * input_dir.x) + (transform.basis.z * input_dir.z)
-	vel.x = direction.x * move_speed
-	vel.z = direction.z * move_speed
-	
-	if is_on_floor() and Input.is_action_just_pressed("move_jump"):
-		vel.y = jump_strength
+	# Handle jump.
+	if Input.is_action_just_pressed("move_jump") and is_on_floor():
+		velocity.y = JUMP_VELOCITY
 		
-	vel.y += -15 * delta # Adjusted Gravity to have a faster falling speed ( TUNE )
+	# Handle sprint
+	if Input.is_action_pressed("move_shift"):
+		speed = SPRINT_SPEED
+	else:
+		speed = WALK_SPEED
+
+	# Get the input direction and handle the movement/deceleration.
+	# As good practice, you should replace UI actions with custom gameplay actions.
+	var input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
+	var direction = (head.transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+	if is_on_floor():
+		if direction:
+			velocity.x = direction.x * speed
+			velocity.z = direction.z * speed
+		else:
+			velocity.x = lerp(velocity.x, direction.x * speed, delta * 7.0)
+			velocity.z = lerp(velocity.z, direction.z * speed, delta * 7.0)
+	else:
+		velocity.x = lerp(velocity.x, direction.x * speed, delta * 3.0)
+		velocity.z = lerp(velocity.z, direction.z * speed, delta * 3.0)
 	
-	velocity = vel
+	#headbob
+	t_bob += delta * velocity.length() * float(is_on_floor())
+	camera.transform.origin = _headbob(t_bob)
+
+	var velocity_clamped = clamp(velocity.length(), 0.5, SPRINT_SPEED * 2)
+	var target_fov = BASE_FOV + FOV_CHANGE * velocity_clamped
+	camera.fov = lerp(camera.fov, target_fov, delta * 8.0)
+	
 	move_and_slide()
+	
+func _headbob(time) -> Vector3:
+	var pos = Vector3.ZERO
+	pos.y = sin(time * BOB_FREQ) * BOB_AMP
+	pos.x = cos(time * BOB_FREQ / 2) * BOB_AMP
+	return pos

@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3 uid="uid://ddwr6xv3648p6"]
+
+[ext_resource type="Script" path="res://Characters/player.gd" id="1_kaahg"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_x6ie2"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_symon"]
+height = 2.02245
+
+[node name="Player" type="CharacterBody3D"]
+script = ExtResource("1_kaahg")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("CapsuleMesh_x6ie2")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_symon")
+
+[node name="Head" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.562956, 0)
+
+[node name="Camera3D" type="Camera3D" parent="Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.134273, 0)
