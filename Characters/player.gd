@@ -38,7 +38,7 @@ func _physics_process(delta):
 		velocity.y = JUMP_VELOCITY
 		
 	# Handle sprint
-	if Input.is_action_pressed("move_shift"):
+	if Input.is_action_pressed("move_shift") and is_on_floor():
 		speed = SPRINT_SPEED
 	else:
 		speed = WALK_SPEED

@@ -12,7 +12,7 @@ config_version=5
 
 config/name="BoomerShooterSample"
 run/main_scene="res://Levels/main_scene.tscn"
-config/features=PackedStringArray("4.3", "Forward Plus")
+config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
@@ -21,7 +21,7 @@ SimpleGrass="*res://addons/simplegrasstextured/singleton.tscn"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/simplegrasstextured/plugin.cfg")
+enabled=PackedStringArray("res://addons/script-ide/plugin.cfg", "res://addons/simplegrasstextured/plugin.cfg")
 
 [input]
 
